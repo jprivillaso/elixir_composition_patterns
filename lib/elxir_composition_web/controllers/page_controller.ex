@@ -1,0 +1,7 @@
+defmodule ElxirCompositionWeb.PageController do
+  use ElxirCompositionWeb, :controller
+
+  def home(conn, _params) do
+    render(conn, :home)
+  end
+end
