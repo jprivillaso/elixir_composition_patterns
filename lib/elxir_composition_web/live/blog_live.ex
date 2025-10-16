@@ -33,8 +33,12 @@ defmodule ElxirCompositionWeb.BlogLive do
     end
   end
 
+  def handle_event("create_post", %{"author_id" => "", "title" => _title}, socket) do
+    {:noreply, put_flash(socket, :error, "Please select an author")}
+  end
+
   def handle_event("create_post", %{"author_id" => author_id, "title" => title}, socket) do
-    case Blog.create_post(author_id, %{title: title, body: "Sample post body"}) do
+    case Blog.create_post(String.to_integer(author_id), %{title: title, body: "Sample post body"}) do
       {:ok, post} ->
         Blog.publish_post(post)
         {:noreply, load_page_data(socket)}
@@ -44,8 +48,12 @@ defmodule ElxirCompositionWeb.BlogLive do
     end
   end
 
+  def handle_event("create_comment", %{"post_id" => "", "author_name" => _name, "body" => _body}, socket) do
+    {:noreply, put_flash(socket, :error, "Please select a post")}
+  end
+
   def handle_event("create_comment", %{"post_id" => post_id, "author_name" => author_name, "body" => body}, socket) do
-    case Blog.create_comment(post_id, %{author_name: author_name, body: body}) do
+    case Blog.create_comment(String.to_integer(post_id), %{author_name: author_name, body: body}) do
       {:ok, _comment} ->
         {:noreply, load_page_data(socket)}
 
@@ -75,18 +83,18 @@ defmodule ElxirCompositionWeb.BlogLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div class="container mx-auto px-4 py-8">
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 overflow-x-hidden">
+      <div class="container mx-auto px-4 py-8 max-w-7xl">
         <header class="mb-8">
-          <h1 class="text-4xl font-bold text-gray-800 mb-2">Blog Composition Demo</h1>
+          <h1 class="text-2xl md:text-4xl font-bold text-gray-800 mb-2">Blog Composition Demo</h1>
           <p class="text-gray-600">Demonstrating Ecto query composition patterns</p>
         </header>
 
-        <nav class="mb-8 flex gap-2">
+        <nav class="mb-8 flex flex-wrap gap-2">
           <button
             phx-click="show_dashboard"
             class={[
-              "px-6 py-2 rounded-lg font-medium transition-colors",
+              "px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base",
               @page == :dashboard && "bg-indigo-600 text-white",
               @page != :dashboard && "bg-white text-gray-700 hover:bg-gray-50"
             ]}
@@ -96,7 +104,7 @@ defmodule ElxirCompositionWeb.BlogLive do
           <button
             phx-click="show_authors"
             class={[
-              "px-6 py-2 rounded-lg font-medium transition-colors",
+              "px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base",
               @page == :authors && "bg-indigo-600 text-white",
               @page != :authors && "bg-white text-gray-700 hover:bg-gray-50"
             ]}
@@ -106,7 +114,7 @@ defmodule ElxirCompositionWeb.BlogLive do
           <button
             phx-click="show_posts"
             class={[
-              "px-6 py-2 rounded-lg font-medium transition-colors",
+              "px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base",
               @page == :posts && "bg-indigo-600 text-white",
               @page != :posts && "bg-white text-gray-700 hover:bg-gray-50"
             ]}
@@ -116,7 +124,7 @@ defmodule ElxirCompositionWeb.BlogLive do
           <button
             phx-click="show_comments"
             class={[
-              "px-6 py-2 rounded-lg font-medium transition-colors",
+              "px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base",
               @page == :comments && "bg-indigo-600 text-white",
               @page != :comments && "bg-white text-gray-700 hover:bg-gray-50"
             ]}
@@ -179,21 +187,21 @@ defmodule ElxirCompositionWeb.BlogLive do
 
           <% @page == :authors -> %>
             <div class="space-y-6">
-              <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Create New Author</h2>
-                <form phx-submit="create_author" class="flex gap-3" id="author-form">
+              <div class="bg-white rounded-lg shadow p-4 md:p-6">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">Create New Author</h2>
+                <form phx-submit="create_author" class="flex flex-col md:flex-row gap-3" id="author-form">
                   <input
                     type="text"
                     name="name"
                     placeholder="Name"
-                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                     required
                   />
                   <input
                     type="email"
                     name="email"
                     placeholder="Email"
-                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                     required
                   />
                   <button
@@ -236,7 +244,7 @@ defmodule ElxirCompositionWeb.BlogLive do
                 <form phx-submit="create_post" class="flex gap-3" id="post-form">
                   <select
                     name="author_id"
-                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                    class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                     required
                   >
                     <option value="">Select Author</option>
@@ -248,7 +256,7 @@ defmodule ElxirCompositionWeb.BlogLive do
                     type="text"
                     name="title"
                     placeholder="Post Title"
-                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                     required
                   />
                   <button
@@ -289,7 +297,7 @@ defmodule ElxirCompositionWeb.BlogLive do
                   <div class="flex gap-3">
                     <select
                       name="post_id"
-                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                       required
                     >
                       <option value="">Select Post</option>
@@ -301,7 +309,7 @@ defmodule ElxirCompositionWeb.BlogLive do
                       type="text"
                       name="author_name"
                       placeholder="Your Name"
-                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                       required
                     />
                   </div>
@@ -310,7 +318,7 @@ defmodule ElxirCompositionWeb.BlogLive do
                       name="body"
                       placeholder="Comment text"
                       rows="3"
-                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                       required
                     ></textarea>
                     <button
